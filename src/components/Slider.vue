@@ -1,0 +1,197 @@
+<template>
+<div>
+  <div class="cards cards__slider clearfix">
+    <div class="cards__slider-arrow cards__slider-left" :class="disableLeftArrow" @click="prevSlide" v-if="cardsInSlider > slidesPerRow">
+      <i class="fas fa-chevron-left"></i>
+    </div>
+
+    <div id="slider-track">
+      <div class="slider-track-inner" :style="{width: computedTrackWidth}" :class="centered">
+        <card v-for="(cardone, index) in cardsInSlider" :key="index" :index="index" :card="card" :slider="slider" :style="{width: computedSlideWidth}">
+        </card>
+      </div>
+    </div>
+
+    <div class="cards__slider-arrow cards__slider-right" :class="disableRightArrow" @click="nextSlide" v-if="cardsInSlider > slidesPerRow">
+      <i class="fas fa-chevron-right"></i>
+    </div>
+  </div>
+
+  <button class="btn" @click="appendSlide" v-if="cardsInSlider < 5">Добавить слайд</button>
+  <div class="cards__counter">Загружено {{ cardsInSlider }} карточек из {{ maxCardsInSlider }}</div>
+</div>
+</template>
+
+<script>
+import Card from './Card.vue'
+
+export default {
+  data() {
+    return {
+      cardsInSlider: 5,
+      maxCardsInSlider: 20,
+      slider: true,
+      currentSlide: 0,
+      transform: 0,
+      slidesPerRow: 4,
+      windowWidth: 0
+    }
+  },
+  props: ['card'],
+  methods: {
+    nextSlide() {
+      if (this.currentSlide < this.cardsInSlider - this.slidesPerRow) {
+        let track = document.getElementById('slider-track').getElementsByClassName('slider-track-inner')[0];
+        let trackWidth = track.offsetWidth;
+
+        this.currentSlide++;
+
+        this.transform = this.transform - (trackWidth / this.cardsInSlider);
+        track.style.transform = 'translateX(' + this.transform + 'px)';
+
+        this.appendSlide();
+      }
+    },
+    prevSlide() {
+      if (this.currentSlide > 0) {
+        let track = document.getElementById('slider-track').getElementsByClassName('slider-track-inner')[0];
+        let trackWidth = track.offsetWidth;
+
+        this.currentSlide--;
+
+        this.transform = this.transform + (trackWidth / this.cardsInSlider);
+
+        track.style.transform = 'translateX(' + this.transform + 'px)';
+      }
+    },
+    getWindowWidth() {
+      this.windowWidth = screen.width;
+
+      if (this.windowWidth > 1000) {
+        this.slidesPerRow = 4;
+      } else if (this.windowWidth <= 1000 && this.windowWidth > 800) {
+        this.slidesPerRow = 3;
+      } else if (this.windowWidth <= 800 && this.windowWidth > 550) {
+        this.slidesPerRow = 2;
+      } else if (this.windowWidth <= 550) {
+        this.slidesPerRow = 1;
+      }
+    },
+    appendSlide() {
+      // добавляем новый слайдер после нажатия кнопки next при условии что не достигнуто максимальное количество элементов в слайдере
+      if (this.cardsInSlider < this.maxCardsInSlider) {
+        this.cardsInSlider++;
+      }
+    },
+  },
+  computed: {
+    centered() {
+      if (this.cardsInSlider < this.slidesPerRow) {
+        return 'centered';
+      } else {
+				return '';
+			}
+    },
+    computedTrackWidth() {
+      if (this.cardsInSlider > this.slidesPerRow) {
+        return this.cardsInSlider * (100 / this.slidesPerRow) + '%';
+      } else {
+        return '100%';
+      }
+    },
+    computedSlideWidth() {
+      return 100 / this.cardsInSlider + '%';
+    },
+    disableRightArrow() {
+      if (this.currentSlide == this.cardsInSlider - this.slidesPerRow) {
+        return 'cards__slider-disabled';
+      } else {
+				return '';
+			}
+    },
+    disableLeftArrow() {
+      if (this.currentSlide == 0) {
+        return 'cards__slider-disabled';
+      } else {
+				return '';
+			}
+    },
+  },
+  components: {
+    Card
+  },
+  mounted() {
+    window.addEventListener('resize', this.getWindowWidth);
+
+    this.getWindowWidth();
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.getWindowWidth);
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+#slider-track {
+  width: 100%;
+  overflow: hidden;
+}
+.slider-track {
+  padding: 20px 0;
+}
+.slider-track-inner {
+  transform: translateX(0);
+  transform-origin: left top;
+  transition: transform 0.6s ease-in-out;
+
+  &.centered {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.cards__counter {
+  margin-bottom: 50px;
+
+  @media (max-width: 500px) {
+    text-align: center;
+  }
+}
+.cards__slider {
+  position: relative;
+  width: 96%;
+  margin: 0 auto;
+  padding: 15px 0;
+
+  &-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #BBB;
+    color: #EEE;
+    padding: 30px 5px;
+    z-index: 10000;
+    transition: 0.3s background;
+
+    &:hover {
+      background: lighten(#BBB, 4%);
+    }
+  }
+  &-left {
+    left: -26px;
+    border-radius: 5px;
+  }
+  &-right {
+    right: -26px;
+    border-radius: 5px;
+  }
+  &-disabled {
+    opacity: 0.5;
+
+    &:hover {
+      background: #BBB;
+    }
+  }
+}
+</style>
